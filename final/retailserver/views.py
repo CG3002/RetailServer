@@ -112,12 +112,12 @@ def hq_stock_level_sync(product_obj):
 
 @app.route('/prices/adjust/', methods=['POST'])
 def adjust_prices():
-	tasks.adjust_prices()
+	tasks.adjust_prices.apply_async()
 	return make_response(jsonify({'error': False}), 200)
 
 @app.route('/products/restock/', methods=['POST'])
 def restock_products():
-	tasks.restock()
+	tasks.restock.apply_async()
 	return make_response(jsonify({'error': False}), 200)
 
 @app.route('/transactions/sync/', methods=['POST'])

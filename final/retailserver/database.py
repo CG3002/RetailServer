@@ -49,7 +49,7 @@ class Product(db.Model):
 			exp_factor=(10/difference.days)
 		elif difference.days == 0:
 			exp_factor=10
-		if self.current_stock > self.min_stock:
+		if self.current_stock > self.min_stock and self.max_stock > self.min_stock:
 			ratio_to_be_raised = (self.current_stock-self.min_stock)/float(self.max_stock-self.min_stock)
 		new_discount = self.max_discount * (ratio_to_be_raised ** exp_factor)
 		self.discount=math.floor(new_discount)

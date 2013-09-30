@@ -13,8 +13,8 @@ class ProductAdmin(sqla.ModelView):
 	can_create = False
 	can_delete = False
 	column_display_pk = True
-	column_filters = ('barcode', )
-	form_columns = ['max_discount', 'current_price', 'current_stock', 'max_stock', 'min_stock']
+	column_filters = ('barcode', 'max_discount', 'max_stock', 'min_stock', 'current_price', 'current_stock')
+	form_columns = ['max_discount', 'max_stock', 'min_stock']
 
 class TransactionDescAdmin(sqla.ModelView):
 	can_create = False

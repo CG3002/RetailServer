@@ -5,15 +5,13 @@ from flask.ext.admin import Admin
 from flask.ext.admin import BaseView, expose, AdminIndexView
 from reportlab.pdfgen import canvas  
 from reportlab.lib.units import cm 
-import gevent
+import gevent, reportlab
 import serial, time
 import gevent.monkey
 from gevent.pywsgi import WSGIServer
 gevent.monkey.patch_all()
 from flask import Flask, request, Response, render_template, redirect
 import webbrowser, threading, requests, datetime, math, os, win32print, win32api
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 
 cash_reg = [ ]
 dac_index = []
@@ -22,7 +20,7 @@ prev_len = 0
 stream_flag = 1
 print_val = ''
 
-reg = ['@r1']	
+reg = ['@r1','@r2', '@r3', '@r4']	
 flag = 1
 start_rec = 0
 wrong_id = 0
@@ -38,7 +36,7 @@ total_price = 0
 ack_flag = 0
 cancel_transaction = 0
 got_response = 0
-timeout = time.time() + 3
+timeout = time.time() 
 language_flag = 0
 
 pdu_update_flag = 0
@@ -48,67 +46,77 @@ ended_trans = 0
 last_trans = []
 
 def update_pdu():
-	global pdu_update_flag, ser, pdu_list
+	global ser
 	pdu_list=PriceDisplayUnit.query.all()
+	print pdu_list
+	#raw_input('hold for pdu')
 	for item in pdu_list:
-		pdu = PriceDisplayUnit.query.get(item.pdu_id)
-		if pdu is not None:
-			ser.write('~')
-			while 1:
-				ack = ser.readline()
-				if ack=='@0/':
-					break
-			products=database.Product.query.get(pdu.barcode)
+		ser.write('~')
+		while 1:
+			ack = ser.readline()
+			if ack=='@0/':
+				break
+		if not(item.barcode is None):
+			print item.barcode
 			#raw_input("Press Enter to continue...")
-			send_msg = '@'+item.pdu_id+str(pdu.barcode)+':$'+str("%.2f"%products.current_price)+'/'
+			products=database.Product.query.get(item.barcode)
+			send_msg = '@'+item.pdu_id+str(item.barcode)+':$'+str("%.2f"%products.current_price)+'/'
 			print send_msg
 			ser.write(str(send_msg))
 	
 def print_receipt(tot_price, trans_id, cashier_id, amount_paid, amount_rem):
-	global last_trans, canvas, base, values, currentprinter, canvas
+	global last_trans, base, values, currentprinter
 	print str(tot_price)+' '+str(trans_id)+' '+str(cashier_id)+str(last_trans)
 	#raw_input("Press Enter to continue...")
-	canvas = canvas.Canvas("receipt.pdf", pagesize=letter)
-	canvas.setLineWidth(.3)
-	canvas.setFont('Helvetica', 12)
+	canv = reportlab.pdfgen.canvas.Canvas("receipt.pdf", pagesize=reportlab.lib.pagesizes.letter)
+	canv.setLineWidth(.3)
+	canv.setFont('Helvetica', 12)
 
-	canvas.drawString(30,750,'CASHIER ID: '+str(cashier_id))
-	canvas.drawString(30,735,'TRANSACTION ID: '+str(trans_id))
+	canv.drawString(30,750,'CASHIER ID: '+str(cashier_id))
+	canv.drawString(30,735,'TRANSACTION ID: '+str(trans_id))
 
-	canvas.drawString(500,750,time.strftime("%d/%m/%Y"))
-	canvas.line(480,747,580,747)
+	canv.drawString(500,750,time.strftime("%d/%m/%Y"))
+	canv.line(480,747,580,747)
 	 
-	canvas.drawString(275,725,'TOTAL PRICE:')
-	canvas.drawString(500,725,"$"+str(tot_price))
-	canvas.line(378,723,580,723)
+	canv.drawString(275,725,'TOTAL PRICE:')
+	canv.drawString(500,725,"$"+str(tot_price))
+	canv.line(378,723,580,723)
 	 
-	canvas.drawString(30,703,'PRODUCTS:')
-	canvas.drawString(120,703,'<Barcode>')
-	canvas.drawString(190,703,'<Quantity>')
-	canvas.drawString(260,703,'<Price>')
-
+	canv.drawString(30,703,'PRODUCTS:')
+	canv.drawString(120,703,'<Barcode>')
+	canv.drawString(190,703,'<Quantity>')
+	canv.drawString(260,703,'<Price>')
+	canv.drawString(330,703,'<Name>')
+	
 	#items = ['10005058 2 24.00', '10005058 2 24.00']
 	base = 683
 	print last_trans
+	name = ''
 	for check in last_trans:
 		values = check.split()
 		print values
-		#raw_input('print check')
+		raw_input('print check')
 		left= 120
+		index = 0
 		for value in values:
-			canvas.drawString(left,base,str(value))
+			if index ==0:
+				index = 1
+				products=database.Product.query.get(value)
+				name = str(products.product_name)
+			canv.drawString(left,base,str(value))
 			left+=70
+		canv.drawString(left,base,str(name))
 		base=base-30
 
-	canvas.line(120,base,580,base)
+	canv.line(120,base,580,base)
 	base-=30
-	canvas.drawString(120,base,'AMOUNT PAID: $ %.2f'%amount_paid)
-	canvas.line(120,base-10,580,base-10)
+	canv.drawString(120,base,'AMOUNT PAID: $ %.2f'%amount_paid)
+	canv.line(120,base-10,580,base-10)
 	base-=30
-	canvas.drawString(120,base,'CHANGE: $ %.2f'%amount_rem)
+	canv.drawString(120,base,'CHANGE: $ %.2f'%amount_rem)
 	base-=30
-	canvas.line(120,base-10,580,base-10)
-	canvas.save()
+	canv.line(120,base-10,580,base-10)
+	canv.save()
 	currentprinter = win32print.GetDefaultPrinter()
 	if len(currentprinter):
 		win32print.SetDefaultPrinter(currentprinter)
@@ -123,7 +131,7 @@ def event_stream():
 		count+=1
 
 def event_barcode():
-	global cash_reg,dac_index,prev_cost,prev_len,stream_flag,reg,flag,start_rec,wrong_id,start_count,correct_id,r_flag,getting_barcode,prod,quan,qty,barcode,total_price,ack_flag,cancel_transaction,got_response,timeout,print_val, oldtime, language_flag, ser, pdu_update_view, last_trans
+	global cash_reg,dac_index,prev_cost,prev_len,stream_flag,reg,flag,start_rec,wrong_id,start_count,correct_id,r_flag,getting_barcode,prod,quan,qty,barcode,total_price,ack_flag,cancel_transaction,got_response,timeout,print_val, oldtime, language_flag, ser, pdu_update_view, last_trans,ended_trans
 	ser = serial.Serial(port=6, baudrate=9600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_TWO, timeout=0.05) 
 	ser.isOpen()
 	pdu_update_view = 0
@@ -134,7 +142,7 @@ def event_barcode():
 			send_pkg = item+'/'
 			ser.write(send_pkg)
 			print 'sending '+ send_pkg
-			timeout = time.time()+5
+			timeout = time.time()+0.01
 			ser.flush() # empty write buffer
 			print 'here'
 			while flag :
@@ -192,6 +200,7 @@ def event_barcode():
 				elif buffer == '?/': #cancel transaction
 					got_response = 1
 					cash_reg = [ ]
+					last_trans = [ ]
 					ser.write('/')
 					while 1:
 						ack = ser.readline()
@@ -225,21 +234,22 @@ def event_barcode():
 									break
 							if dup_barcode == 0:
 								quantity = barcode[10:-1]
-								quan_check = int(quantity)
-								print str(products.current_stock)+' '+str(quantity)
-								#raw_input("Press Enter to continue...")
-								product_stock=database.Product.query.get(barcode[1:9])
-								if (quan_check > product_stock.current_stock) or (quan_check == 0):
-									if language_flag == 0:
-										send_error='&0#P#R/'
-									else:
-										send_error='&0#@#B/'
-									ser.write(send_error)
-									while 1:
-										ack = ser.readline()
-										if ack == '@0/' :
-											break
-									break
+								if quantity!='':
+									quan_check = int(quantity)
+									print str(products.current_stock)+' '+str(quantity)
+									#raw_input("Press Enter to continue...")
+									product_stock=database.Product.query.get(barcode[1:9])
+									if (quan_check > product_stock.current_stock) or (quan_check == 0):
+										if language_flag == 0:
+											send_error='&0#P#R/'
+										else:
+											send_error='&0#@#B/'
+										ser.write(send_error)
+										while 1:
+											ack = ser.readline()
+											if ack == '@0/' :
+												break
+										break
 								
 								price = products.current_price
 								if products.bundle_unit > 0:
@@ -280,6 +290,9 @@ def event_barcode():
 								ack = ser.readline()
 								if ack == '@0/' :
 									break
+						if ended_trans==1:
+							ended_trans=0
+							last_trans = []
 					elif buffer[0] == '^':
 						got_response = 1
 						trolley = buffer[1:-1]
@@ -302,6 +315,9 @@ def event_barcode():
 						items = transactions.get_trolley_items(trolley)
 						print items
 						list = []
+						if ended_trans == 1:
+							last_trans = []
+						ended_trans = 1
 						listitem = '0'
 						if len(items):
 							for item in items:
@@ -313,8 +329,8 @@ def event_barcode():
 									price = product.current_price
 								listitem = str(barcode)+' '+str(quantity)+' %.2f'%(price) 
 								print listitem
-						if listitem!='0':
-							last_trans.append(str(listitem))
+								if listitem!='0':
+									last_trans.append(str(listitem))
 						print last_trans
 						#raw_input('test')
 						while 1:
@@ -323,61 +339,66 @@ def event_barcode():
 								break
 					elif buffer[0] == '>':
 						got_response = 1
-						splitcheck = buffer.split(')',1)
-						amount_p = splitcheck[0]
-						amount_rem = splitcheck[1]
-						amount_p= amount_p[1:]
-						actual = []
-						amount_paid = amount_p
-						digit_flag = 1
-						val = 7
-						final =''
-						while val>0:
-							actual.append(str(amount_paid[val]))
-							val-=1
-						carry_over = 0
-						for digit in actual:
-							actdigit = ord(digit)-48
-							print digit+' '+str(actdigit)
-							if actdigit==10:
-								final+='0'
-								carry_over = 1
-							else:
-								if carry_over == 1:
-									digitwithcarry = actdigit+1
-									if digitwithcarry == 10:
-										carry_over=1
-										final+='0'
-										continue
-									else:
-										final+=str(digitwithcarry)
-										carry_over = 0
-										continue
-								final+=str(actdigit)
-								carry_over = 0
-						final = final[::-1]
-						amount_rem = amount_rem[:-1]
-						print str(int(final))+' '+str(int(amount_rem))
-						a1 = float(int(final)/100.0)
-						a2 = float(int(amount_rem)/100.0)
-						tot_price = float(a1-a2)
-						print_flag = 1
-						ended_trans = 0
-						if len(str(trans_id)):
-							trans =  database.TransactionTimestamp.query.get(trans_id)
-							if trans is not None:
-								cash_id = trans.cashier_id
-						print_receipt(tot_price, trans_id, cash_id, a1, a2)
-						print str(tot_price)+' '+str(trans_id)+' '+str(cash_id)
-						print buffer
-						print last_trans
-						#raw_input("Press Enter to continue...")
-						trans_id = ''
-						ser.write('/')
-						while 1:
-							ack = ser.readline()
-							if ack == '@0/' :
-								break
+						if ended_trans==1:
+							splitcheck = buffer.split(')',1)
+							amount_p = splitcheck[0]
+							amount_rem = splitcheck[1]
+							amount_p= amount_p[1:]
+							actual = []
+							amount_paid = amount_p
+							digit_flag = 1
+							val = 7
+							final =''
+							while val>=0:
+								actual.append(str(amount_paid[val]))
+								val-=1
+							carry_over = 0
+							for digit in actual:
+								actdigit = ord(digit)-48
+								print digit+' '+str(actdigit)
+								if actdigit>=10:
+									if carry_over ==1:
+										actdigit+=1
+									stringact = str(actdigit)
+									final+=stringact[1]
+									carry_over = 1
+								else:
+									if carry_over == 1:
+										digitwithcarry = actdigit+1
+										if digitwithcarry == 10:
+											carry_over=1
+											final+='0'
+											continue
+										else:
+											final+=str(digitwithcarry)
+											carry_over = 0
+											continue
+									final+=str(actdigit)
+									carry_over = 0
+							final = final[::-1]
+							amount_rem = amount_rem[:-1]
+							print str(int(final))+' '+str(int(amount_rem))
+							a1 = float(int(final)/100.0)
+							a2 = float(int(amount_rem)/100.0)
+							tot_price = float(a1-a2)
+							print_flag = 1
+							ended_trans = 0
+							if len(str(trans_id)):
+								trans =  database.TransactionTimestamp.query.get(trans_id)
+								if trans is not None:
+									cash_id = trans.cashier_id
+							print_receipt(tot_price, trans_id, cash_id, a1, a2)
+							print str(tot_price)+' '+str(trans_id)+' '+str(cash_id)
+							print buffer
+							print last_trans
+							#raw_input("Press Enter to continue...")
+							trans_id = ''
+							ser.write('/')
+							while 1:
+								ack = ser.readline()
+								if ack == '@0/' :
+									break
+							ended_trans= 0
 			barcode = ''
 			got_response = 0
 			if len(cash_reg) != prev_len:
@@ -392,15 +413,10 @@ def event_barcode():
 		today_date = datetime.date.today()
 		print today_date
 		#raw_input("Press Enter to continue...")
-		if today_date != oldtime:
+		if today_date != oldtime and ( int(time.strftime("%H")) >=6 and int(time.strftime("%M")) >=30 ):
 			oldtime = today_date
 			update_pdu()
 		
-			#print receipt
-			# if print_flag == 1:
-				# print_receipt()
-			#update pdu
-			
 		var = pdu_update_view
 		print 'PDU FLAG:'+' '+str(var)
 		if var==1:

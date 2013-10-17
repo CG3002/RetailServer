@@ -12,14 +12,21 @@ db = SQLAlchemy(app)
 class Product(db.Model):
 	__tablename__="Retail Products"
 	barcode=db.Column(db.Integer, primary_key=True)
+	MRP=db.Column(db.Integer)
+	current_price=db.Column(db.Integer)
 	discount=db.Column(db.Integer)
 	current_stock=db.Column(db.Integer)
 	max_stock=db.Column(db.Integer)
 	min_stock=db.Column(db.Integer)
 	bundle_unit=db.Column(db.Integer)
 
-	def __init__(self, barcode, discount=0, current_stock=0, max_stock=0, min_stock=0, bundle_unit=0):
+	def __init__(self, barcode, MRP, discount=0, current_price=None, current_stock=0, max_stock=0, min_stock=0, bundle_unit=0):
 		self.barcode=barcode
+		self.MRP=MRP
+		if current_price is None:
+			self.current_price=self.MRP
+		else: 
+			self.current_price=current_price
 		self.discount=discount
 		self.current_stock=current_stock
 		self.max_stock=max_stock

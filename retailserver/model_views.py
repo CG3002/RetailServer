@@ -5,5 +5,6 @@ from flask.ext.admin.contrib import sqla
 
 class ProductAdmin(sqla.ModelView):
 	can_create = False
+	can_delete = False
 	column_display_pk = True
 	form_columns = ['discount', 'current_price', 'current_stock', 'max_stock', 'min_stock']

@@ -53,12 +53,10 @@ def product_sync():
 		return make_response(jsonify({'error': True}), 403)		
 
 
-def hq_stock_level_sync(product_obj, db_action):
-	if db_action == 'update':
-		url = constants.HQ_SERVER_URL + "/sync/"	
-		data = product_obj.serialize()
-		headers = {'content-type' : 'application/json'}
-		data['outlet_url'] = str(request.url_root)
-		data = simplejson.dumps(data, use_decimal=True)
-		resp = requests.put(url, data=data, headers=headers)
-		print resp.text
+def hq_stock_level_sync(product_obj):
+	url = constants.HQ_SERVER_URL + "/sync/"	
+	data = product_obj.serialize()
+	headers = {'content-type' : 'application/json'}
+	data['outlet_url'] = str(request.url_root)
+	data = simplejson.dumps(data, use_decimal=True)
+	resp = requests.put(url, data=data, headers=headers)

@@ -43,7 +43,7 @@ class Product(db.Model):
 		'min_stock' : self.min_stock
 		}
 
-def hq_stock_level_sync(sender, changes):
-	for model, change in changes:
-		if isinstance(model, Product):
-			views.hq_stock_level_sync(model, change)
+
+
+
+

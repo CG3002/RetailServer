@@ -11,7 +11,7 @@ def product_sync():
 		data=request.get_json()
 		barcode=data.get('barcode')
 		MRP=data.get('product_MRP')
-		bundle_unit=data.get('bundle_unit')
+		bundle_unit=data.get('product_bundle_unit')
 		product=database.Product.query.get(barcode)
 		if product is None:
 			new_product=database.Product(barcode=barcode, MRP=MRP, bundle_unit=bundle_unit)
@@ -38,7 +38,7 @@ def product_sync():
 		print data
 		barcode=data.get('barcode')
 		MRP=data.get('product_MRP')
-		bundle_unit=data.get('bundle_unit')
+		bundle_unit=data.get('product_bundle_unit')
 		product=database.Product.query.get(barcode)
 		if product is None:
 			new_product=database.Product(barcode=barcode, MRP=MRP, bundle_unit=bundle_unit)
@@ -50,13 +50,23 @@ def product_sync():
 			database.db.session.commit()
 		return make_response(jsonify({'barcode': data.get('barcode'), 'error': False}), 200)
 	else:
-		return make_response(jsonify({'error': True}), 403)		
+		return make_response(jsonify({'error': True}), 403)
 
+def restock(product_obj):
+	url = constants.HQ_SERVER_URL + "/restock/"
+	data = product_obj.serialize
+	headers = {'content-type' : 'application/json'}
+	data['outlet_url'] = str(constants.RETAIL_SERVER_URL)
+	data = simplejson.dumps(data, use_decimal=True)
+	resp = requests.post(url, data=data, headers=headers)	
+	if resp.status_code==200:
+		product_obj.current_stock=product_obj.max_stock
+		database.db.session.commit()
 
 def hq_stock_level_sync(product_obj):
 	url = constants.HQ_SERVER_URL + "/sync/"	
 	data = product_obj.serialize()
 	headers = {'content-type' : 'application/json'}
-	data['outlet_url'] = str(request.url_root)
+	data['outlet_url'] = str(constants.RETAIL_SERVER_URL)
 	data = simplejson.dumps(data, use_decimal=True)
 	resp = requests.put(url, data=data, headers=headers)

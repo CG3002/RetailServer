@@ -2,6 +2,12 @@
 This file contains the Model Views for Flask admin
 '''
 from flask.ext.admin.contrib import sqla
+from flask.ext.admin.model import typefmt
+
+MY_DEFAULT_FORMATTERS = dict(typefmt.BASE_FORMATTERS)
+MY_DEFAULT_FORMATTERS.update({
+        type(None): typefmt.null_formatter
+    })
 
 class ProductAdmin(sqla.ModelView):
 	can_create = False
@@ -20,4 +26,10 @@ class TransactionStampAdmin(sqla.ModelView):
 	can_create = False
 	can_delete = False
 	column_display_pk = True
-	column_filters = ('transaction_id', 'cashier_id')
+	column_filters = ('transaction_id', 'cashier_id', 'timestamp')
+
+class PriceDisplayUnitAdmin(sqla.ModelView):
+	column_display_pk = True
+	column_type_formatters = MY_DEFAULT_FORMATTERS
+	form_columns = ['pdu_id', 'product']
+	column_filters = ('pdu_id', 'barcode')

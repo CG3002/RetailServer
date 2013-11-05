@@ -20,6 +20,7 @@ def product_sync():
 		else:
 			product.MRP=MRP
 			product.bundle_unit=bundle_unit
+			product.adjust_price()
 			database.db.session.commit()
 		return make_response(jsonify({'barcode': data.get('barcode'), 'error' : False}), 200)
 	elif request.method=="DELETE":
@@ -47,6 +48,7 @@ def product_sync():
 		else:
 			product.MRP=MRP
 			product.bundle_unit=bundle_unit
+			product.adjust_price()
 			database.db.session.commit()
 		return make_response(jsonify({'barcode': data.get('barcode'), 'error': False}), 200)
 	else:
@@ -70,3 +72,8 @@ def hq_stock_level_sync(product_obj):
 	data['outlet_url'] = str(constants.RETAIL_SERVER_URL)
 	data = simplejson.dumps(data, use_decimal=True)
 	resp = requests.put(url, data=data, headers=headers)
+	if resp.status_code == 200:
+		print product_obj.max_stock
+		print product_obj.current_stock
+		product_obj.current_stock = product_obj.max_stock
+		database.db.session.commit()

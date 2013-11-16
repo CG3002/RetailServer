@@ -10,7 +10,7 @@ import simplejson
 # date=datetime.date.today()
 # for day in range(1,30):
 date=datetime.date.today()
-timestamp=time.mktime(date.timetuple())
+timestamp=1377964800
 payload = {}
 payload['outlet_url'] = str(constants.RETAIL_SERVER_URL)
 payload['history'] = []
@@ -30,11 +30,12 @@ for barcode, quantity in database.db.session.query(database.TransactionDetails.b
 	for transaction in transactions_product:
 		product = database.Product.query.get(transaction.barcode)
 		total_price += product.total_price(transaction.quantity)
-	temp_dict['total_revenue'] = total_price
+	temp_dict['total_revenue'] = "%.2f" % total_price
 	temp_dict['barcode'] = barcode
 	temp_dict['quantity'] = quantity
 	payload['history'].append(temp_dict.copy())
 headers = {'content-type' : 'application/json'}
+print payload
 data = simplejson.dumps(payload)
 url = constants.HQ_SERVER_URL + "/transactions/sync/"
 resp = requests.post(url, data=data, headers=headers)

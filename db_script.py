@@ -16,7 +16,7 @@ import codecs, time, datetime
 # 					manufacturer_name=manufacturer_name, product_MRP=product_MRP, product_bundle_unit=product_bundle_unit)
 # 	database.db.session.add(product)
 # 	database.db.session.commit()
-file_object=codecs.open("Trans_1000_20_9_11759.txt", 'r', 'utf-8')
+file_object=codecs.open("Trans_1000_20_9_26223.txt", 'r', 'utf-8')
 for line in file_object:
 	line_split=line.split(':')
 	transaction_id=line_split[0]
@@ -33,7 +33,7 @@ for line in file_object:
 	else:
 		continue
 
-file_object=codecs.open("Trans_1000_20_9_11759.txt", 'r', 'utf-8')
+file_object=codecs.open("Trans_1000_20_9_26223.txt", 'r', 'utf-8')
 for line in file_object:
 	line_split=line.split(':')
 	transaction_id=line_split[0]

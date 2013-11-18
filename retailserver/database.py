@@ -6,7 +6,7 @@ import views
 import datetime
 import math
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C://Users//dell//Desktop//RetailServer//retailtest.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/retailtest.db'
 # app.config['SQLALCHEMY_ECHO'] = True
 app.secret_key = os.urandom(24)
 db = SQLAlchemy(app)

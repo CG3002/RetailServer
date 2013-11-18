@@ -4,7 +4,7 @@ import random
 from retailserver import database
 from retailserver import transactions
 
-ser = serial.Serial(port=6, baudrate=9600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_TWO, timeout=0.05) 
+ser = serial.Serial(port='/dev/tty.usbserial', baudrate=9600, bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_TWO, timeout=0.05) 
 ser.isOpen()
 connected=False
 
@@ -81,12 +81,13 @@ while 1 :
 							print 'Invalid barcode'
 						elif value==-3:
 							print 'Database error'
+				cash_reg=[ 0 ]
 				ser.write('/')
 				while 1:
 					ack = ser.readline()
 					if ack == '@0/' :
 						break
-			elif buffer == '%/'
+			elif buffer == '%/':
 				got_response = 1
 				cash_reg = cash_reg[:-1]
 				ser.write('/')

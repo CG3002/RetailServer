@@ -36,16 +36,15 @@ def add_transaction(items_list):
 				else:
 					database.db.session.delete(new_transaction)
 					database.db.session.commit()
-					return "Invalid quantity"
+					return -1
 			else:
 				database.db.session.delete(new_transaction)
 				database.db.session.commit()
-				return "Invalid barcode/quantity"
+				return -2
 		except:
 			database.db.session.delete(new_transaction)
 			database.db.session.commit()
-			return "Error while creating transaction"
+			return -3
 	database.db.session.commit()
-	return total_price
-
+	return new_transaction
 

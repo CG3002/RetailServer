@@ -46,6 +46,5 @@ def add_transaction(items_list):
 			database.db.session.commit()
 			return -3
 	database.db.session.commit()
-	return 0
-
+	return 1
 

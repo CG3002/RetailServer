@@ -1,6 +1,6 @@
 from retailserver import app
 import requests
-from flask import request, make_response, jsonify, json
+from flask import request, make_response, jsonify, json, render_template
 import simplejson
 import database
 import constants
@@ -77,3 +77,8 @@ def hq_stock_level_sync(product_obj):
 		print product_obj.current_stock
 		product_obj.current_stock = product_obj.max_stock
 		database.db.session.commit()
+		
+@app.route('/reg',methods=['GET'])
+def panelSettings():   
+    myList = ["gan","dalf"]
+    return render_template('admin.html',arg=myList)

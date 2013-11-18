@@ -28,7 +28,7 @@ def add_transaction(items_list):
 			quantity=item['quantity']
 			product=database.Product.query.get(barcode)
 			if product is not None and quantity > 0:
-				if (product.current_stock - product.min_stock) >= 0:				
+				if (product.current_stock - quantity) >= 0:				
 					product.current_stock = product.current_stock - quantity
 					new_trans_description=database.TransactionDetails(transaction_id=new_transaction.transaction_id, barcode=barcode, quantity=quantity)
 					database.db.session.add(new_trans_description)
@@ -36,16 +36,16 @@ def add_transaction(items_list):
 				else:
 					database.db.session.delete(new_transaction)
 					database.db.session.commit()
-					return "Invalid quantity"
+					return -1
 			else:
 				database.db.session.delete(new_transaction)
 				database.db.session.commit()
-				return "Invalid barcode/quantity"
+				return -2
 		except:
 			database.db.session.delete(new_transaction)
 			database.db.session.commit()
-			return "Error while creating transaction"
+			return -3
 	database.db.session.commit()
-	return total_price
+	return 0
 
 

@@ -10,7 +10,7 @@ import simplejson
 # date=datetime.date.today()
 # for day in range(1,30):
 date=datetime.date.today()
-timestamp=1377964800
+timestamp=time.mktime(date.timetuple())
 payload = {}
 payload['outlet_url'] = str(constants.RETAIL_SERVER_URL)
 payload['history'] = []

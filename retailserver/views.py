@@ -5,6 +5,35 @@ import simplejson
 import database
 import constants
 
+@app.route('/', methods=['DELETE', 'GET', 'POST', 'PUT'])
+def index():
+	print request.headers
+	return make_response(jsonify({'barcode': "test", 'error' : False}), 200)
+
+# @app.route('/trolley/price/', methods=['GET', ])
+# def get_price():
+# 	data=request.get_json
+# 	trolley=request.get('trolley')
+
+@app.route('/quantity/validate/<barcode>', methods=['POST', 'GET'])
+def validate_quantity(barcode=None):
+	quantity=request.args.get('quantity')
+	print quantity
+	if barcode is None:
+		return make_response(jsonify({'error': 'Enter Product Name'}), 200)
+	else:
+		product = database.Product.query.get(barcode)
+		available_stock = product.current_stock-product.min_stock
+		if available_stock >= int(quantity):
+			if int(quantity) > 0:
+				return make_response(jsonify({'success': 'true'}), 200)
+			else:
+				return make_response(jsonify({'error' : 'Quantity must be positive'}), 200)
+		else:
+			return make_response(jsonify({'error': 'Quantity must be less than '+str(available_stock)}),200)
+
+
+
 @app.route('/sync/', methods=['DELETE', 'POST', 'PUT'])
 def product_sync():
 	if request.method=="POST":

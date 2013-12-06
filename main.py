@@ -24,4 +24,4 @@ if __name__ == "__main__":
 	admin.add_view(PriceDisplayUnitAdmin(PriceDisplayUnit, db.session))
 	admin.add_view(MyView(name="Cash Register"))
 	app.debug = True
-	app.run('0.0.0.0', 5000)
+	app.run('127.0.0.1', 5000)

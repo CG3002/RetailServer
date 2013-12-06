@@ -2,7 +2,8 @@ import constants
 import database
 import datetime
 import time
-
+import simplejson
+import requests
 
 def add_transaction(items_list):
 	'''
@@ -30,6 +31,7 @@ def add_transaction(items_list):
 			if product is not None and quantity > 0:
 				if (product.current_stock - quantity) >= 0:				
 					product.current_stock = product.current_stock - quantity
+					database.db.session.commit()
 					new_trans_description=database.TransactionDetails(transaction_id=new_transaction.transaction_id, barcode=barcode, quantity=quantity)
 					database.db.session.add(new_trans_description)
 					total_price += product.total_price(quantity)
@@ -47,4 +49,10 @@ def add_transaction(items_list):
 			return -3
 	database.db.session.commit()
 	return 1
+
+def checkout_trolley(trolley_id):
+	url=constants.HQ_SERVER_URL+"/trolley/get/"
+	data=simplejson.dumps({'trolley': trolley_id})
+	headers = {'content-type' : 'application/json'}
+
 

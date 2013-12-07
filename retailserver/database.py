@@ -5,6 +5,9 @@ import os
 import views
 import datetime
 import math
+import constants
+import requests
+import simplejson
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/retailtest.db'
 # app.config['SQLALCHEMY_ECHO'] = True
@@ -51,6 +54,14 @@ class Product(db.Model):
 		new_discount = self.max_discount * (ratio_to_be_raised ** exp_factor)
 		self.discount=math.floor(new_discount)
 		self.current_price=self.MRP - self.MRP * (self.discount/100)
+
+	@property
+	def product_name(self):
+		url=constants.HQ_SERVER_URL+"/product/name/"
+		payload={'barcode': self.barcode}
+		headers = {'content-type' : 'application/json'}
+		resp=requests.post(url, data=simplejson.dumps(payload), headers=headers)
+		return resp.json().get('product_name')
 
 	def __init__(self, **kwargs):
 		self.barcode=kwargs.get('barcode')

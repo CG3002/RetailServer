@@ -48,7 +48,7 @@ def add_transaction(items_list):
 			database.db.session.commit()
 			return -3
 	database.db.session.commit()
-	return 1
+	return new_transaction.transaction_id
 
 def checkout_trolley(trolley_id):
 	url=constants.HQ_SERVER_URL+"/trolley/get/"
@@ -57,10 +57,38 @@ def checkout_trolley(trolley_id):
 	print data
 	resp=requests.post(url, data=data, headers=headers)
 	items_list=resp.json()
-	error=items_list.get('error')
-	if error is True:
+	if not isinstance(items_list, list):
 		return -1
 	print items_list
-	return add_transaction(items_list)
+	new_transaction=database.TransactionTimestamp()
+	database.db.session.add(new_transaction)
+	database.db.session.commit()
+	total_price = 0
+	for item in items_list:
+		try:
+			barcode=item['barcode']
+			quantity=item['quantity']
+			product=database.Product.query.get(barcode)
+			if product is not None and quantity > 0:
+				if (product.current_stock - quantity) >= 0:				
+					product.current_stock = product.current_stock - quantity
+					database.db.session.commit()
+					new_trans_description=database.TransactionDetails(transaction_id=new_transaction.transaction_id, barcode=barcode, quantity=quantity)
+					database.db.session.add(new_trans_description)
+					total_price += product.total_price(quantity)
+				else:
+					database.db.session.delete(new_transaction)
+					database.db.session.commit()
+					return -1
+			else:
+				database.db.session.delete(new_transaction)
+				database.db.session.commit()
+				return -2
+		except:
+			database.db.session.delete(new_transaction)
+			database.db.session.commit()
+			return -3
+	database.db.session.commit()
+	return total_price
 	
 

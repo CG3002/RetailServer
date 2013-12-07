@@ -54,5 +54,13 @@ def checkout_trolley(trolley_id):
 	url=constants.HQ_SERVER_URL+"/trolley/get/"
 	data=simplejson.dumps({'trolley': trolley_id})
 	headers = {'content-type' : 'application/json'}
-
+	print data
+	resp=requests.post(url, data=data, headers=headers)
+	items_list=resp.json()
+	error=items_list.get('error')
+	if error is True:
+		return -1
+	print items_list
+	return add_transaction(items_list)
+	
 

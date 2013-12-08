@@ -1,7 +1,6 @@
 from retailserver import app
 from flask.ext.sqlalchemy import SQLAlchemy
 import time
-import os
 import views
 import datetime
 import math
@@ -11,7 +10,6 @@ import simplejson
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/hari/retailtest.db'
 # app.config['SQLALCHEMY_ECHO'] = True
-app.secret_key = os.urandom(24)
 db = SQLAlchemy(app)
 
 class Product(db.Model):
@@ -43,6 +41,7 @@ class Product(db.Model):
 		'''
 		Adjusts price based on stock level
 		'''
+		ratio_to_be_raised=0
 		current_date=datetime.datetime.now()
 		last_restock_date=self.date_last_restock
 		difference=current_date - last_restock_date
@@ -50,7 +49,8 @@ class Product(db.Model):
 			exp_factor=(10/difference.days)
 		elif difference.days == 0:
 			exp_factor=10
-		ratio_to_be_raised = (self.current_stock-self.min_stock)/float(self.max_stock-self.min_stock)
+		if self.current_stock > self.min_stock:
+			ratio_to_be_raised = (self.current_stock-self.min_stock)/float(self.max_stock-self.min_stock)
 		new_discount = self.max_discount * (ratio_to_be_raised ** exp_factor)
 		self.discount=math.floor(new_discount)
 		self.current_price=self.MRP - self.MRP * (self.discount/100)

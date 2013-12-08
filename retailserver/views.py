@@ -4,6 +4,8 @@ from flask import request, make_response, jsonify, json, render_template
 import simplejson
 import database
 import constants
+import tasks
+import transactions
 
 @app.route('/', methods=['DELETE', 'GET', 'POST', 'PUT'])
 def index():
@@ -106,8 +108,29 @@ def hq_stock_level_sync(product_obj):
 		print product_obj.current_stock
 		product_obj.current_stock = product_obj.max_stock
 		database.db.session.commit()
+
+@app.route('/prices/adjust/', methods=['POST'])
+def adjust_prices():
+	tasks.adjust_prices()
+	return make_response(jsonify({'error': False}), 200)
+
+@app.route('/products/restock/', methods=['POST'])
+def restock_products():
+	tasks.restock()
+	return make_response(jsonify({'error': False}), 200)
+
+@app.route('/transactions/sync/', methods=['POST'])
+def sync_transactions():
+	tasks.sync_transactions()
+	return make_response(jsonify({'error': False}), 200)
 		
 @app.route('/reg',methods=['GET'])
 def panelSettings():   
     myList = ["gan","dalf"]
     return render_template('admin.html',arg=myList)
+
+@app.route('/get/price/', methods=['POST'])
+def return_trolley_price():
+	items_list=request.get_json()
+	price=transactions.calculate_price(items_list)
+	return make_response(jsonify({'price': price}), 200)

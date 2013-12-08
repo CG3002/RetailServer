@@ -1,17 +1,17 @@
-from retailserver import database
-from retailserver import constants
+import database
+import constants
 import datetime
-from retailserver import views
+import views
 import time
 from sqlalchemy import func
 import requests
 import simplejson
 from retailserver import celery
-from celery.schedules import crontab
 
 # date=datetime.date.today()
 # for day in range(1,30):
-@celery.periodic_task(run_every=crontab(hour=6, minute=0))
+
+@celery.task
 def sync_transactions():
 	date=datetime.date.today()
 	timestamp=time.mktime(date.timetuple())
@@ -43,3 +43,26 @@ def sync_transactions():
 	data = simplejson.dumps(payload)
 	url = constants.HQ_SERVER_URL + "/transactions/sync/"
 	resp = requests.post(url, data=data, headers=headers)
+
+@celery.task
+def adjust_prices():
+	products=database.Product.query.all()
+	print "Hi"
+
+	for product in products:
+		print product.barcode
+		product.adjust_price()
+		database.db.session.commit()
+
+@celery.task
+def restock():
+	products=database.Product.query.all()
+	no_of_products_at_min_stock = 0
+	products_to_be_restocked = []
+	for product in products:
+		if product.current_stock <= product.min_stock:
+			++no_of_products_at_min_stock
+			products_to_be_restocked.append(product)
+	if no_of_products_at_min_stock >= constants.NO_OF_PRODUCTS_BEFORE_RESTOCK:
+		for product in products_to_be_restocked:
+			view.hq_stock_level_sync(product)

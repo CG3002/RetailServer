@@ -16,22 +16,22 @@ import codecs, time, datetime
 # 					manufacturer_name=manufacturer_name, product_MRP=product_MRP, product_bundle_unit=product_bundle_unit)
 # 	database.db.session.add(product)
 # 	database.db.session.commit()
-file_object=codecs.open("Trans_1000_20_9_26223.txt", 'r', 'utf-8')
-for line in file_object:
-	line_split=line.split(':')
-	transaction_id=line_split[0]
-	cashier_id=line_split[1]
-	barcode=line_split[3]
-	quantity=line_split[4]
-	date=line_split[5].strip()
-	timestamp=time.mktime(datetime.datetime.strptime(date, "%d/%m/%Y").timetuple())
-	temp=database.TransactionTimestamp.query.get(transaction_id)
-	if temp is None:
-		new_transaction_timestamp=database.TransactionTimestamp(transaction_id=transaction_id, cashier_id=cashier_id, timestamp=timestamp)
-		database.db.session.add(new_transaction_timestamp)
-		database.db.session.commit()
-	else:
-		continue
+# file_object=codecs.open("Trans_1000_20_9_26223.txt", 'r', 'utf-8')
+# for line in file_object:
+# 	line_split=line.split(':')
+# 	transaction_id=line_split[0]
+# 	cashier_id=line_split[1]
+# 	barcode=line_split[3]
+# 	quantity=line_split[4]
+# 	date=line_split[5].strip()
+# 	timestamp=time.mktime(datetime.datetime.strptime(date, "%d/%m/%Y").timetuple())
+# 	temp=database.TransactionTimestamp.query.get(transaction_id)
+# 	if temp is None:
+# 		new_transaction_timestamp=database.TransactionTimestamp(transaction_id=transaction_id, cashier_id=cashier_id, timestamp=timestamp)
+# 		database.db.session.add(new_transaction_timestamp)
+# 		database.db.session.commit()
+# 	else:
+# 		continue
 
 file_object=codecs.open("Trans_1000_20_9_26223.txt", 'r', 'utf-8')
 for line in file_object:

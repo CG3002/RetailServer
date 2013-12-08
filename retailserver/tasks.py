@@ -65,4 +65,4 @@ def restock():
 			products_to_be_restocked.append(product)
 	if no_of_products_at_min_stock >= constants.NO_OF_PRODUCTS_BEFORE_RESTOCK:
 		for product in products_to_be_restocked:
-			view.hq_stock_level_sync(product)
+			views.hq_stock_level_sync(product)

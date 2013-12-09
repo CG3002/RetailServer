@@ -1,0 +1,70 @@
+{% extends 'admin/master.html' %}
+{% block head %}
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+		<script type="text/javascript" src="/static/js/parsley.js"></script>
+		<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+  		<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+{% endblock %}
+{% block body %}
+    <div>Click the buttons for manually executing the functions</div>
+    <button id="prices">Adjust Prices</button><br />
+    <button id="transactions">Sync Transactions</button><br />
+    <button id="restock">Restock</button><br />
+    <script type="text/javascript">
+    	$(document).ready(function() {
+    		$(document).on('click', '#prices', function() {
+    			event.preventDefault();
+    			console.log("HEre");
+    			$.ajax({
+			            type: "POST",
+			            contentType: "application/json",
+			            url: "{{ url_for('adjust_prices') }}",
+			            data: JSON.stringify({}),
+			            dataType: "json",
+			            success: function(data) {
+			            	//$("#dialog-success").dialog("open");
+			                //var obj = jQuery.parseJSON(data); if the dataType is not specified as json uncomment this
+			                // do what ever you want with the server response
+			            },
+			            error: function(){
+			                  alert('error handing here');
+			            }
+			    });
+    		});
+    		$(document).on('click', '#transactions', function() {
+    			$.ajax({
+			            type: "POST",
+			            contentType: "application/json",
+			            url: "{{ url_for('sync_transactions') }}",
+			            data: JSON.stringify({}),
+			            dataType: "json",
+			            success: function(data) {
+			            	//$("#dialog-success").dialog("open");
+			                //var obj = jQuery.parseJSON(data); if the dataType is not specified as json uncomment this
+			                // do what ever you want with the server response
+			            },
+			            error: function(){
+			                  alert('error handing here');
+			            }
+			    });
+    		});
+    		$(document).on('click', '#restock', function() {
+    			$.ajax({
+			            type: "POST",
+			            contentType: "application/json",
+			            url: "{{ url_for('restock_products') }}",
+			            data: JSON.stringify({}),
+			            dataType: "json",
+			            success: function(data) {
+			            	$("#dialog-success").dialog("open");
+			                //var obj = jQuery.parseJSON(data); if the dataType is not specified as json uncomment this
+			                // do what ever you want with the server response
+			            },
+			            error: function(){
+			                  alert('error handing here');
+			            }
+			    });
+    		});
+    	});
+    </script>
+{% endblock %}

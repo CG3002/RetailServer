@@ -1,0 +1,7 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+	<h2>Are you sure you want to update?<br> This will change all of the PDU units across the store.</h2><br>
+	<form action="/pduupdate/" method="post">
+    <button type="submit">Update</button>
+	</form>
+{% endblock %}
